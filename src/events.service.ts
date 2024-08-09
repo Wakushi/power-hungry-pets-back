@@ -1,20 +1,14 @@
+import {WebSocket} from "ws";
 import {UserService} from "./user.service";
-import {MultiplayerService} from "./multiplayer.service";
+import {ClientEvent, GameEvent} from "./event.type";
+import {GameService} from "./game.service";
 
-enum GameEventType {
-    USER_JOINED = 'USER_JOINED'
-}
-
-type GameEvent = {
-    type: GameEventType
-    data: any
-}
-
+const REQUIRED_PLAYERS_AMOUNT = 2
 
 export class EventsService {
     private static _instance: EventsService
     private _userService = UserService.getInstance()
-    private _multiplayerService = MultiplayerService.getInstance()
+    private _gameService = GameService.getInstance()
 
     private constructor() {
     }
@@ -26,11 +20,15 @@ export class EventsService {
         return EventsService._instance
     }
 
-    public dispatch(event: GameEvent): void {
+    public dispatch(client: WebSocket, event: GameEvent): void {
+
         switch (event.type) {
-            case GameEventType.USER_JOINED:
-                this._userService.connectUser(event.data)
-                this._multiplayerService
+            case ClientEvent.USER_JOINED:
+                const connectedUsers = this._userService.connectUser(event.data)
+
+                if (connectedUsers.length >= REQUIRED_PLAYERS_AMOUNT) {
+                    this._gameService.startGame(connectedUsers)
+                }
                 break
         }
     }

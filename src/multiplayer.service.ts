@@ -1,6 +1,7 @@
 import http from 'http';
 import {WebSocket, WebSocketServer} from "ws";
 import {EventsService} from "./events.service";
+import {GameEvent} from "./event.type";
 
 export class MultiplayerService {
     private static _instance: MultiplayerService
@@ -16,22 +17,22 @@ export class MultiplayerService {
         return MultiplayerService._instance
     }
 
-    initSocket(server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>): void {
+    public initSocket(server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>): void {
         this._socket = new WebSocketServer({server});
 
         this._socket.on('connection', (ws: WebSocket) => {
-
             ws.on('message', (message: ArrayBuffer) => {
                 const event = JSON.parse(message.toString())
-                EventsService.getInstance().dispatch(event)
-
-                // wss.clients.forEach(client => {
-                //     if (client !== ws && client.readyState === WebSocket.OPEN) {
-                //
-                //     }
-                // });
+                EventsService.getInstance().dispatch(ws, event)
             });
         });
+    }
 
+    public broadcast(event: GameEvent, origin?: WebSocket): void {
+        this._socket.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN && client !== origin) {
+                client.send(JSON.stringify(event)) //
+            }
+        });
     }
 }

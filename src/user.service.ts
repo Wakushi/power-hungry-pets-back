@@ -18,10 +18,12 @@ export class UserService {
         return this._connectedUsers
     }
 
-    public connectUser(user: User): void {
+    public connectUser(user: User): User[] {
         if (!this._connectedUsers.some((connectedUser) => connectedUser.id === user.id)) {
             this._connectedUsers.push(user)
         }
+
+        return this.connectedUsers
     }
 
 }
