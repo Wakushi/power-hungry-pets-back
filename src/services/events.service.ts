@@ -32,7 +32,6 @@ export class EventsService {
         if (connectedUsers.length >= REQUIRED_PLAYERS_AMOUNT) {
           this._gameService.startGame(connectedUsers)
         }
-
         break
 
       case ClientEvent.CARD_PLAYED:
@@ -43,6 +42,12 @@ export class EventsService {
       case ClientEvent.PLAYER_SELECTED:
         const selectedPlayer = event.data
         this._onPlayerSelected(selectedPlayer.id)
+        break
+
+      case ClientEvent.INSERT_CARD:
+        const { card, index } = event.data
+        this._gameService.deck.insertCardAtIndex(card, index)
+        this._gameService.onNextTurn()
         break
     }
   }
