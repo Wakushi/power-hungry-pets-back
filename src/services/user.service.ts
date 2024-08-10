@@ -1,4 +1,4 @@
-import { User } from "../types/user.type"
+import { User } from "../lib/types/user.type"
 
 export class UserService {
   private static _instance: UserService

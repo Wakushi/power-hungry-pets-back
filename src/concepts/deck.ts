@@ -1,6 +1,6 @@
 import { availableCards } from "../lib/data/card-data"
+import { Card } from "../lib/types/card.type"
 import { shuffleArray } from "../lib/utils"
-import { Card } from "../types/card.type"
 
 export class Deck {
   private _cards: Card[] = []

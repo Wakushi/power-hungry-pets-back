@@ -1,12 +1,11 @@
 import { WebSocket } from "ws"
 import { UserService } from "./user.service"
-import { ClientEvent, GameEvent, ServerEvent } from "../types/event.type"
 import { GameService } from "./game.service"
 import { Player } from "../concepts/player"
-import { CardType } from "../lib/types/card.type"
+import { Card, CardType } from "../lib/types/card.type"
 import { MultiplayerService } from "./multiplayer.service"
 import { Deck } from "../concepts/deck"
-import { Card } from "../types/card.type"
+import { ClientEvent, GameEvent, ServerEvent } from "../lib/types/event.type"
 
 const REQUIRED_PLAYERS_AMOUNT = 2
 
@@ -48,6 +47,9 @@ export class EventsService {
         const { card, index } = event.data
         this._gameService.deck.insertCardAtIndex(card, index)
         this._gameService.onNextTurn()
+        break
+
+      case ClientEvent.SWITCH_CARD:
         break
     }
   }

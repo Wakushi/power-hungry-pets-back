@@ -1,6 +1,6 @@
+import { Card } from "../lib/types/card.type"
+import { User } from "../lib/types/user.type"
 import { GameService } from "../services/game.service"
-import { Card } from "../types/card.type"
-import { User } from "../types/user.type"
 
 export class Player {
   id: string

@@ -1,9 +1,10 @@
-import { User } from "../types/user.type"
 import { MultiplayerService } from "./multiplayer.service"
-import { ServerEvent } from "../types/event.type"
+
 import { Deck } from "../concepts/deck"
 import { Player } from "../concepts/player"
 import { UserService } from "./user.service"
+import { User } from "../lib/types/user.type"
+import { ServerEvent } from "../lib/types/event.type"
 
 export class GameService {
   private static _instance: GameService
