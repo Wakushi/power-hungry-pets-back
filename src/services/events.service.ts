@@ -68,7 +68,7 @@ export class EventsService {
     }
 
     if (this._gameService.interactionMode === "selection") {
-      //   this._checkLastCardIdInteraction(cardValue)
+      this._checkLastCardIdInteraction(cardValue)
     }
   }
 
@@ -210,7 +210,7 @@ export class EventsService {
 
       case CardType.CRYSTAL_BOWL:
         this._gameService.interactionMode = "selection"
-        this._sendCardSelectionEvent()
+        this._sendCardSelectionEvent(true)
         break
 
       default:
@@ -224,9 +224,10 @@ export class EventsService {
     })
   }
 
-  private _sendCardSelectionEvent(): void {
+  private _sendCardSelectionEvent(open: boolean): void {
     MultiplayerService.getInstance().broadcast({
-      type: ServerEvent.OPEN_CARD_SELECTION,
+      type: ServerEvent.TOGGLE_CARD_SELECTION,
+      data: open,
     })
   }
 
@@ -247,5 +248,21 @@ export class EventsService {
         deck,
       },
     })
+  }
+
+  private _checkLastCardIdInteraction(clickedCardId: string): void {
+    switch (this._gameService.lastCardPlayedId) {
+      case CardType.CRYSTAL_BOWL:
+        if (
+          this._gameService.lastSelectedPlayer.hand[0].value === +clickedCardId
+        ) {
+          this._gameService.lastSelectedPlayer.eliminate()
+        }
+        this._sendCardSelectionEvent(false)
+        this._gameService.onNextTurn()
+        break
+      default:
+        break
+    }
   }
 }

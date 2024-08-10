@@ -3,6 +3,7 @@ import { MultiplayerService } from "./multiplayer.service"
 import { ServerEvent } from "../types/event.type"
 import { Deck } from "../concepts/deck"
 import { Player } from "../concepts/player"
+import { UserService } from "./user.service"
 
 export class GameService {
   private static _instance: GameService
@@ -154,6 +155,7 @@ export class GameService {
   private _onGameOver(winner: Player): void {
     this._gameOver = true
     this._lastWinner = winner
+    UserService.getInstance().connectedUsers = []
 
     this._multiplayerService.broadcast({
       type: ServerEvent.GAME_OVER,
