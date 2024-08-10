@@ -1,7 +1,7 @@
 import http from 'http';
 import {WebSocket, WebSocketServer} from "ws";
 import {EventsService} from "./events.service";
-import {GameEvent} from "./event.type";
+import {GameEvent} from "../types/event.type";
 
 export class MultiplayerService {
     private static _instance: MultiplayerService
@@ -31,7 +31,7 @@ export class MultiplayerService {
     public broadcast(event: GameEvent, origin?: WebSocket): void {
         this._socket.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN && client !== origin) {
-                client.send(JSON.stringify(event)) //
+                client.send(JSON.stringify(event))
             }
         });
     }

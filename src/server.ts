@@ -1,17 +1,17 @@
-import express, {Request, Response} from 'express';
-import http from 'http';
-import {MultiplayerService} from "./multiplayer.service";
+import express, { Request, Response } from "express"
+import http from "http"
+import { MultiplayerService } from "./services/multiplayer.service"
 
-const app = express();
-const server = http.createServer(app);
-const port = process.env.PORT || 3000;
+const app = express()
+const server = http.createServer(app)
+const port = process.env.PORT || 3000
 
 MultiplayerService.getInstance().initSocket(server)
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, TypeScript with Express!');
-});
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello, TypeScript with Express!")
+})
 
 server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+  console.log(`Server is running on http://localhost:${port}`)
+})
