@@ -7,11 +7,13 @@ export enum ClientEvent {
 export enum ServerEvent {
   GAME_STARTED = "GAME_STARTED",
   OPEN_PLAYER_SELECTION = "OPEN_PLAYER_SELECTION",
+  OPEN_CARD_SELECTION = "OPEN_CARD_SELECTION",
   OPEN_CARD_VIEW = "OPEN_CARD_VIEW",
   NEXT_TURN = "NEXT_TURN",
+  GAME_OVER = "GAME_OVER",
 }
 
 export type GameEvent = {
   type: ClientEvent | ServerEvent
-  data: any
+  data?: any
 }

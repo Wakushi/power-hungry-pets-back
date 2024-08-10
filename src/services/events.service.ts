@@ -42,7 +42,7 @@ export class EventsService {
 
       case ClientEvent.PLAYER_SELECTED:
         const selectedPlayer = event.data
-        this._onPlayerSelected(selectedPlayer)
+        this._onPlayerSelected(selectedPlayer.id)
         break
     }
   }
@@ -145,8 +145,16 @@ export class EventsService {
     }
   }
 
-  private _onPlayerSelected(selectedPlayer: Player): void {
+  private _onPlayerSelected(selectedPlayerId: string): void {
     const activePlayer = this._gameService.activePlayer
+    const selectedPlayer = this._gameService.players.find(
+      (player) => player.id === selectedPlayerId
+    )
+
+    if (!selectedPlayer) {
+      throw new Error("Player at id " + selectedPlayerId + " not found")
+    }
+
     this._gameService.lastSelectedPlayer = selectedPlayer
 
     if (!activePlayer) return
@@ -196,8 +204,8 @@ export class EventsService {
         break
 
       case CardType.CRYSTAL_BOWL:
-        // toggleCardSelectionModal(true)
         this._gameService.interactionMode = "selection"
+        this._sendCardSelectionEvent()
         break
 
       default:
@@ -208,7 +216,12 @@ export class EventsService {
   private _sendPlayerSelectionEvent(): void {
     MultiplayerService.getInstance().broadcast({
       type: ServerEvent.OPEN_PLAYER_SELECTION,
-      data: "",
+    })
+  }
+
+  private _sendCardSelectionEvent(): void {
+    MultiplayerService.getInstance().broadcast({
+      type: ServerEvent.OPEN_CARD_SELECTION,
     })
   }
 

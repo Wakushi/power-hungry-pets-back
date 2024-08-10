@@ -58,6 +58,10 @@ export class GameService {
     return this._activePlayerId
   }
 
+  public get lastCardPlayedId(): string {
+    return this._lastCardPlayedId
+  }
+
   public set lastCardPlayedId(id: string) {
     this._lastCardPlayedId = id
   }
@@ -114,6 +118,13 @@ export class GameService {
     }
   }
 
+  public onPlayerElimination(): void {
+    const activePlayers = this.players.filter((player) => !player.eliminated)
+    if (activePlayers.length === 1) {
+      this._onGameOver(activePlayers[0])
+    }
+  }
+
   private _compareCards(): void {
     let winner: Player = this.players[0]
 
@@ -143,8 +154,11 @@ export class GameService {
   private _onGameOver(winner: Player): void {
     this._gameOver = true
     this._lastWinner = winner
-    // TODO: SEND GAME OVER EVENT TO CLIENTS
-    // document.dispatchEvent(new CustomEvent("toggleGameOverModal", {detail: true}))
+
+    this._multiplayerService.broadcast({
+      type: ServerEvent.GAME_OVER,
+      data: winner,
+    })
   }
 
   private _resetDeck(): void {

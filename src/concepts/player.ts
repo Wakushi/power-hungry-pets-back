@@ -1,3 +1,4 @@
+import { GameService } from "../services/game.service"
 import { Card } from "../types/card.type"
 import { User } from "../types/user.type"
 
@@ -17,9 +18,7 @@ export class Player {
 
   public eliminate(): void {
     this.eliminated = true
-    document.dispatchEvent(
-      new CustomEvent("playerEliminated", { detail: this })
-    )
+    GameService.getInstance().onPlayerElimination()
   }
 
   public discard(cardValue: number): void {
