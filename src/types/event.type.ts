@@ -2,6 +2,7 @@ export enum ClientEvent {
   USER_JOINED = "USER_JOINED",
   CARD_PLAYED = "CARD_PLAYED",
   PLAYER_SELECTED = "PLAYER_SELECTED",
+  INSERT_CARD = "INSERT_CARD",
 }
 
 export enum ServerEvent {
