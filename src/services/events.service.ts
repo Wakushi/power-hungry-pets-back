@@ -50,6 +50,17 @@ export class EventsService {
         break
 
       case ClientEvent.SWITCH_CARD:
+        if (event.data.switch) {
+          const activePlayer = this._gameService.activePlayer
+
+          if (!activePlayer) return
+
+          const sideCard = this._gameService.deck.sideCard
+          const [activePlayerCard] = activePlayer.hand.splice(0, 1, sideCard)
+          this._gameService.deck.sideCard = activePlayerCard
+        }
+
+        this._gameService.onNextTurn()
         break
     }
   }
