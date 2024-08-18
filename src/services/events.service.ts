@@ -26,8 +26,9 @@ export class EventsService {
     public dispatch(clientId: string, event: GameEvent): void {
         switch (event.type) {
             case ClientEvent.CREATE_ROOM:
-                this._userService.connectUser({...event.data, clientId})
-                const room = this._roomService.createRoom(event.data)
+                const initialUser = {...event.data, clientId}
+                this._userService.connectUser(initialUser)
+                const room = this._roomService.createRoom(initialUser)
 
                 MultiplayerService.getInstance().broadcast({
                     type: ServerEvent.ROOM_CREATED,
@@ -35,7 +36,29 @@ export class EventsService {
                 }, [clientId])
                 break
 
+            case ClientEvent.JOIN_ROOM:
+                const {user, roomCode} = event.data
+                const foundRoom = this._roomService.getRoomById(roomCode)
 
+                if (!foundRoom) {
+                    MultiplayerService.getInstance().broadcast({
+                        type: ServerEvent.ROOM_NOT_FOUND,
+                        data: roomCode
+                    }, [clientId])
+                    return
+                }
+
+                if (foundRoom?.users.findIndex(u => u.id === user.id) === -1) {
+                    foundRoom.users.push({...user, clientId})
+                }
+
+                this._roomService.updateRoom(roomCode, foundRoom)
+
+                MultiplayerService.getInstance().broadcast({
+                    type: ServerEvent.ROOM_FOUND,
+                    data: foundRoom
+                }, foundRoom.users.map(u => u.clientId))
+                break
         }
     }
 
