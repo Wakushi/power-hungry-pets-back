@@ -5,6 +5,7 @@ import {Player} from "./player"
 import {UserService} from "../services/user.service"
 import {User} from "../lib/types/user.type"
 import {ServerEvent} from "../lib/types/event.type"
+import {CardType} from "../lib/types/card.type";
 
 export class Game {
     private _multiplayerService = MultiplayerService.getInstance()
@@ -181,6 +182,223 @@ export class Game {
 
         if (!this.deck.cards.length) {
             this._lastTurn = true
+        }
+    }
+
+    public onCardPlayed(cardValue: string): void {
+        const activePlayer = this.activePlayer
+
+        if (!activePlayer) return
+
+        if (activePlayer.protected) {
+            activePlayer.protected = false
+        }
+
+        if (this.interactionMode === "activation") {
+            activePlayer.discard(+cardValue)
+            this._activateCardEffect(cardValue, activePlayer)
+            this.lastCardPlayedId = cardValue
+        }
+
+        if (this.interactionMode === "selection") {
+            this._checkLastCardIdInteraction(cardValue)
+        }
+    }
+
+    private _activateCardEffect(cardValue: string, activePlayer: Player): void {
+        switch (cardValue) {
+            case CardType.NOT_A_PET:
+                this.players.forEach((player) => {
+                    if (
+                        player.id !== activePlayer.id &&
+                        player.hand[0].value.toString() === CardType.KING_CAT
+                    ) {
+                        const [playerCard] = player.hand.splice(0, 1)
+                        const [activePlayerCard] = activePlayer.hand.splice(0, 1)
+                        player.hand.push(activePlayerCard)
+                        activePlayer.hand.push(playerCard)
+                    }
+                })
+                this.onNextTurn()
+                break
+
+            case CardType.HERMIT_HOME_SWAP:
+                this._sendPlayerSelectionEvent()
+                break
+
+            case CardType.JITTERY_JUGGLER:
+                this.players.forEach((player) => {
+                    const playerCard = player.hand.splice(0, 1)[0]
+                    this.deck.insertCardAtIndex(playerCard, 0)
+                })
+
+                this.deck.shuffleDeck()
+
+                this.players.forEach((player) => {
+                    player.hand.push(this.deck.draw())
+                })
+
+                this.onNextTurn()
+                break
+
+            case CardType.DOGGY_GRAVE_DIGGER:
+                // this._sendCardViewEvent({
+                //     playedCardValue: CardType.DOGGY_GRAVE_DIGGER,
+                //     card: this.deck.sideCard,
+                //     deck: this.deck,
+                // })
+                break
+
+            case CardType.SNAKE_SORCERER:
+                this._sendPlayerSelectionEvent()
+                break
+
+            case CardType.SHELL_SHIELD:
+                activePlayer.protected = true
+                this.onNextTurn()
+                break
+
+            case CardType.BATTLE_BUNNY:
+                this._sendPlayerSelectionEvent()
+                break
+
+            case CardType.MOUSE_TRAPPER:
+                const card = this.deck.draw()
+                // this._sendCardViewEvent({
+                //     playedCardValue: CardType.MOUSE_TRAPPER,
+                //     card,
+                //     deck: this.deck,
+                // })
+                break
+
+            case CardType.CRYSTAL_BOWL:
+                this._sendPlayerSelectionEvent()
+                break
+
+            case CardType.ROYAL_ROBOVAC:
+                this.onNextTurn()
+                break
+            default:
+                break
+        }
+    }
+
+    //
+    // private _onPlayerSelected(selectedPlayerId: string): void {
+    //     const activePlayer = this.activePlayer
+    //     const selectedPlayer = this.players.find(
+    //         (player) => player.id === selectedPlayerId
+    //     )
+    //
+    //     if (!selectedPlayer) {
+    //         throw new Error("Player at id " + selectedPlayerId + " not found")
+    //     }
+    //
+    //     this.lastSelectedPlayer = selectedPlayer
+    //
+    //     if (!activePlayer) return
+    //
+    //     if (this.lastSelectedPlayer.protected) {
+    //         //   alert(
+    //         //     "Player " + this.lastSelectedPlayer.id + " is protected !"
+    //         //   )
+    //         //   togglePlayerSelectionModal(false)
+    //         this.onNextTurn()
+    //         return
+    //     }
+    //
+    //     const selectedPlayerCard = this.lastSelectedPlayer.hand[0]
+    //
+    //     switch (this.lastCardPlayedId) {
+    //         case CardType.HERMIT_HOME_SWAP:
+    //             const [currentPlayerCard] = activePlayer.hand.splice(0, 1)
+    //             const [targetPlayerCard] = selectedPlayer.hand.splice(0, 1)
+    //             activePlayer.hand.push(targetPlayerCard)
+    //             selectedPlayer.hand.push(currentPlayerCard)
+    //
+    //             this.onNextTurn()
+    //             break
+    //
+    //         case CardType.SNAKE_SORCERER:
+    //             selectedPlayer.discard(selectedPlayerCard.value)
+    //
+    //             if (selectedPlayerCard.value.toString() === CardType.KING_CAT) {
+    //                 selectedPlayer.eliminate()
+    //             } else {
+    //                 selectedPlayer.hand.push(this.deck.draw())
+    //             }
+    //
+    //             this.onNextTurn()
+    //             break
+    //
+    //         case CardType.BATTLE_BUNNY:
+    //             const activePlayerCard = activePlayer.hand[0]
+    //             if (activePlayerCard.value > selectedPlayerCard.value) {
+    //                 selectedPlayer.eliminate()
+    //             } else if (activePlayerCard.value < selectedPlayerCard.value) {
+    //                 activePlayer.eliminate()
+    //             }
+    //
+    //             this.onNextTurn()
+    //             break
+    //
+    //         case CardType.CRYSTAL_BOWL:
+    //             this.interactionMode = "selection"
+    //             this._sendCardSelectionEvent(true)
+    //             break
+    //
+    //         default:
+    //             break
+    //     }
+    // }
+    //
+
+    private _sendPlayerSelectionEvent(): void {
+        MultiplayerService.getInstance().broadcast({
+            type: ServerEvent.OPEN_PLAYER_SELECTION,
+        }, this._players.map(p => p.clientId))
+    }
+
+    //
+    // private _sendCardSelectionEvent(open: boolean): void {
+    //     MultiplayerService.getInstance().broadcast({
+    //         type: ServerEvent.TOGGLE_CARD_SELECTION,
+    //         data: open,
+    //     }, [])
+    // }
+    //
+    // private _sendCardViewEvent({
+    //                                playedCardValue,
+    //                                card,
+    //                                deck,
+    //                            }: {
+    //     playedCardValue: CardType
+    //     card: Card
+    //     deck: Deck
+    // }): void {
+    //     MultiplayerService.getInstance().broadcast({
+    //         type: ServerEvent.OPEN_CARD_VIEW,
+    //         data: {
+    //             playedCardValue,
+    //             card,
+    //             deck,
+    //         },
+    //     }, [])
+    // }
+    //
+    private _checkLastCardIdInteraction(clickedCardId: string): void {
+        switch (this.lastCardPlayedId) {
+            case CardType.CRYSTAL_BOWL:
+                if (
+                    this.lastSelectedPlayer.hand[0].value === +clickedCardId
+                ) {
+                    this.lastSelectedPlayer.eliminate()
+                }
+                // this._sendCardSelectionEvent(false)
+                this.onNextTurn()
+                break
+            default:
+                break
         }
     }
 }

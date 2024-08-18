@@ -37,7 +37,6 @@ export class MultiplayerService {
     public broadcast(event: GameEvent, clientIds: string[]): void {
         clientIds.forEach(id => {
             const client = this._clients.get(id)
-
             if (client && client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(event))
             }
@@ -50,7 +49,4 @@ export class MultiplayerService {
         return clientId
     }
 
-    private _getClientById(id: string): WebSocket | null {
-        return this._clients.get(id) || null
-    }
 }

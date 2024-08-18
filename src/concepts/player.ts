@@ -3,6 +3,7 @@ import {User} from "../lib/types/user.type"
 
 export class Player {
     id: string
+    clientId: string
     name: string
     hand: Card[] = []
     discards: Card[] = []
@@ -12,6 +13,7 @@ export class Player {
     constructor(user: User) {
         this.id = user.id
         this.name = user.name
+        this.clientId = user.clientId
     }
 
     public eliminate(): void {
