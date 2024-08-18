@@ -1,13 +1,12 @@
-import {MultiplayerService} from "./multiplayer.service"
+import {MultiplayerService} from "../services/multiplayer.service"
 
-import {Deck} from "../concepts/deck"
-import {Player} from "../concepts/player"
-import {UserService} from "./user.service"
+import {Deck} from "./deck"
+import {Player} from "./player"
+import {UserService} from "../services/user.service"
 import {User} from "../lib/types/user.type"
 import {ServerEvent} from "../lib/types/event.type"
 
-export class GameService {
-    private static _instance: GameService
+export class Game {
     private _multiplayerService = MultiplayerService.getInstance()
 
     private _deck!: Deck
@@ -23,14 +22,11 @@ export class GameService {
     private _gameOver = false
     private _interactionMode: "selection" | "activation" = "activation"
 
-    private constructor() {
-    }
-
-    public static getInstance(): GameService {
-        if (!GameService._instance) {
-            GameService._instance = new GameService()
+    constructor(users: User[]) {
+        if (users?.length < 2) {
+            throw new Error("Can't start game with " + users.length + " players.")
         }
-        return GameService._instance
+        this.startGame(users)
     }
 
     public get deck(): Deck {
@@ -98,11 +94,6 @@ export class GameService {
         this._resetPlayers(users)
         this._resetPlayerHands()
         this._onTurnStart()
-
-        this._multiplayerService.broadcast({
-            type: ServerEvent.GAME_STARTED,
-            data: {players: this.players, activePlayerId: this._activePlayerId},
-        }, [])
     }
 
     public onNextTurn(): void {

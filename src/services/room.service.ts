@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from 'uuid';
-import {Room} from "../lib/types/room";
+import {Room} from "../lib/types/room.type";
 import {User} from "../lib/types/user.type";
+import {Game} from "../concepts/game";
 
 export class RoomService {
     private static _instance: RoomService
@@ -39,5 +40,16 @@ export class RoomService {
 
     public updateRoom(id: string, room: Room): void {
         this._rooms.set(id, room)
+    }
+
+    public createGameForRoom(roomId: string): Room {
+        const room = this.getRoomById(roomId)
+
+        if (!room) {
+            throw new Error('Room not found at id ' + roomId)
+        }
+
+        room.game = new Game(room.users)
+        return room
     }
 }
