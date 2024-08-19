@@ -283,90 +283,90 @@ export class Game {
         }
     }
 
-    //
-    // private _onPlayerSelected(selectedPlayerId: string): void {
-    //     const activePlayer = this.activePlayer
-    //     const selectedPlayer = this.players.find(
-    //         (player) => player.id === selectedPlayerId
-    //     )
-    //
-    //     if (!selectedPlayer) {
-    //         throw new Error("Player at id " + selectedPlayerId + " not found")
-    //     }
-    //
-    //     this.lastSelectedPlayer = selectedPlayer
-    //
-    //     if (!activePlayer) return
-    //
-    //     if (this.lastSelectedPlayer.protected) {
-    //         //   alert(
-    //         //     "Player " + this.lastSelectedPlayer.id + " is protected !"
-    //         //   )
-    //         //   togglePlayerSelectionModal(false)
-    //         this.onNextTurn()
-    //         return
-    //     }
-    //
-    //     const selectedPlayerCard = this.lastSelectedPlayer.hand[0]
-    //
-    //     switch (this.lastCardPlayedId) {
-    //         case CardType.HERMIT_HOME_SWAP:
-    //             const [currentPlayerCard] = activePlayer.hand.splice(0, 1)
-    //             const [targetPlayerCard] = selectedPlayer.hand.splice(0, 1)
-    //             activePlayer.hand.push(targetPlayerCard)
-    //             selectedPlayer.hand.push(currentPlayerCard)
-    //
-    //             this.onNextTurn()
-    //             break
-    //
-    //         case CardType.SNAKE_SORCERER:
-    //             selectedPlayer.discard(selectedPlayerCard.value)
-    //
-    //             if (selectedPlayerCard.value.toString() === CardType.KING_CAT) {
-    //                 selectedPlayer.eliminate()
-    //             } else {
-    //                 selectedPlayer.hand.push(this.deck.draw())
-    //             }
-    //
-    //             this.onNextTurn()
-    //             break
-    //
-    //         case CardType.BATTLE_BUNNY:
-    //             const activePlayerCard = activePlayer.hand[0]
-    //             if (activePlayerCard.value > selectedPlayerCard.value) {
-    //                 selectedPlayer.eliminate()
-    //             } else if (activePlayerCard.value < selectedPlayerCard.value) {
-    //                 activePlayer.eliminate()
-    //             }
-    //
-    //             this.onNextTurn()
-    //             break
-    //
-    //         case CardType.CRYSTAL_BOWL:
-    //             this.interactionMode = "selection"
-    //             this._sendCardSelectionEvent(true)
-    //             break
-    //
-    //         default:
-    //             break
-    //     }
-    // }
-    //
+    public onPlayerSelected(selectedPlayerId: string): void {
+        const activePlayer = this.activePlayer
+        const selectedPlayer = this.players.find(
+            (player) => player.id === selectedPlayerId
+        )
+
+        if (!selectedPlayer) {
+            throw new Error("Player at id " + selectedPlayerId + " not found")
+        }
+
+        this.lastSelectedPlayer = selectedPlayer
+
+        console.log('Last selected player: ', this.lastSelectedPlayer)
+
+        if (!activePlayer) return
+
+        if (this.lastSelectedPlayer.protected) {
+            //   alert(
+            //     "Player " + this.lastSelectedPlayer.id + " is protected !"
+            //   )
+            //   togglePlayerSelectionModal(false)
+            this.onNextTurn()
+            return
+        }
+
+        const selectedPlayerCard = this.lastSelectedPlayer.hand[0]
+
+        switch (this.lastCardPlayedId) {
+            case CardType.HERMIT_HOME_SWAP:
+                const [currentPlayerCard] = activePlayer.hand.splice(0, 1)
+                const [targetPlayerCard] = selectedPlayer.hand.splice(0, 1)
+                activePlayer.hand.push(targetPlayerCard)
+                selectedPlayer.hand.push(currentPlayerCard)
+
+                this.onNextTurn()
+                break
+
+            case CardType.SNAKE_SORCERER:
+                selectedPlayer.discard(selectedPlayerCard.value)
+
+                if (selectedPlayerCard.value.toString() === CardType.KING_CAT) {
+                    selectedPlayer.eliminate()
+                } else {
+                    selectedPlayer.hand.push(this.deck.draw())
+                }
+
+                this.onNextTurn()
+                break
+
+            case CardType.BATTLE_BUNNY:
+                const activePlayerCard = activePlayer.hand[0]
+                if (activePlayerCard.value > selectedPlayerCard.value) {
+                    selectedPlayer.eliminate()
+                } else if (activePlayerCard.value < selectedPlayerCard.value) {
+                    activePlayer.eliminate()
+                }
+
+                this.onNextTurn()
+                break
+
+            case CardType.CRYSTAL_BOWL:
+                this.interactionMode = "selection"
+                this._sendCardSelectionEvent(true)
+                break
+
+            default:
+                break
+        }
+    }
+
 
     private _sendPlayerSelectionEvent(): void {
         MultiplayerService.getInstance().broadcast({
             type: ServerEvent.OPEN_PLAYER_SELECTION,
-        }, this._players.map(p => p.clientId))
+        }, [this.activePlayer.clientId])
     }
 
-    //
-    // private _sendCardSelectionEvent(open: boolean): void {
-    //     MultiplayerService.getInstance().broadcast({
-    //         type: ServerEvent.TOGGLE_CARD_SELECTION,
-    //         data: open,
-    //     }, [])
-    // }
-    //
+
+    private _sendCardSelectionEvent(open: boolean): void {
+        MultiplayerService.getInstance().broadcast({
+            type: ServerEvent.TOGGLE_CARD_SELECTION
+        }, [this.activePlayer.clientId])
+    }
+
     // private _sendCardViewEvent({
     //                                playedCardValue,
     //                                card,

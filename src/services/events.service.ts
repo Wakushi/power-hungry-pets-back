@@ -3,6 +3,7 @@ import {MultiplayerService} from "./multiplayer.service"
 import {ClientEvent, GameEvent, ServerEvent} from "../lib/types/event.type"
 import {RoomService} from "./room.service";
 import {Room} from "../lib/types/room.type";
+import {Game} from "../concepts/game";
 
 export class EventsService {
     private static _instance: EventsService
@@ -66,16 +67,23 @@ export class EventsService {
                 break
 
             case ClientEvent.CARD_PLAYED:
-                const {roomId, card} = event.data
-                const gameRoom = this._roomService.getRoomById(roomId)
+                this.getGameRoom(event.data.roomId).onCardPlayed(event.data.card.value.toString())
+                break
 
-                if (!gameRoom?.game) {
-                    throw new Error('Room game not found for room ' + roomId)
-                }
-
-                gameRoom?.game.onCardPlayed(card.value.toString())
+            case ClientEvent.PLAYER_SELECTED:
+                this.getGameRoom(event.data.roomId).onPlayerSelected(event.data.playerId)
                 break
         }
+    }
+
+    private getGameRoom(roomId: string): Game {
+        const gameRoom = this._roomService.getRoomById(roomId)
+
+        if (!gameRoom?.game) {
+            throw new Error('Room game not found for room ' + roomId)
+        }
+
+        return gameRoom?.game
     }
 
 
