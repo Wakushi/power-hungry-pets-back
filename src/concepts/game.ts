@@ -108,8 +108,8 @@ export class Game {
 
             this._multiplayerService.broadcast({
                 type: ServerEvent.NEXT_TURN,
-                data: {players: this.players, activePlayerId: this._activePlayerId},
-            }, [])
+                data: this,
+            }, this.players.map(p => p.clientId))
         }
     }
 
@@ -136,14 +136,14 @@ export class Game {
 
     private _getNextPlayerId(): string {
         const activePlayerIndex = this.players.findIndex(
-            (player) => player.id !== this.activePlayerId
+            (player) => player.id === this.activePlayerId
         )
 
         if (activePlayerIndex === -1) {
             throw new Error("Next player not found !")
         }
 
-        return this.players[activePlayerIndex].id
+        return this.players[(activePlayerIndex + 1) % this.players.length].id
     }
 
     private _onGameOver(winner: Player): void {
@@ -345,7 +345,7 @@ export class Game {
 
             case CardType.CRYSTAL_BOWL:
                 this.interactionMode = "selection"
-                this._sendCardSelectionEvent(true)
+                this._sendCardSelectionEvent()
                 break
 
             default:
@@ -353,18 +353,31 @@ export class Game {
         }
     }
 
-
     private _sendPlayerSelectionEvent(): void {
         MultiplayerService.getInstance().broadcast({
             type: ServerEvent.OPEN_PLAYER_SELECTION,
         }, [this.activePlayer.clientId])
     }
 
-
-    private _sendCardSelectionEvent(open: boolean): void {
+    private _sendCardSelectionEvent(): void {
         MultiplayerService.getInstance().broadcast({
             type: ServerEvent.TOGGLE_CARD_SELECTION
         }, [this.activePlayer.clientId])
+    }
+
+    private _checkLastCardIdInteraction(clickedCardId: string): void {
+        switch (this.lastCardPlayedId) {
+            case CardType.CRYSTAL_BOWL:
+                if (
+                    this.lastSelectedPlayer.hand[0].value === +clickedCardId
+                ) {
+                    this.lastSelectedPlayer.eliminate()
+                }
+                this.onNextTurn()
+                break
+            default:
+                break
+        }
     }
 
     // private _sendCardViewEvent({
@@ -386,19 +399,4 @@ export class Game {
     //     }, [])
     // }
     //
-    private _checkLastCardIdInteraction(clickedCardId: string): void {
-        switch (this.lastCardPlayedId) {
-            case CardType.CRYSTAL_BOWL:
-                if (
-                    this.lastSelectedPlayer.hand[0].value === +clickedCardId
-                ) {
-                    this.lastSelectedPlayer.eliminate()
-                }
-                // this._sendCardSelectionEvent(false)
-                this.onNextTurn()
-                break
-            default:
-                break
-        }
-    }
 }
