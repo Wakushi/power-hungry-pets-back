@@ -106,6 +106,11 @@ export class Game {
     }
     if (!this._gameOver) {
       this._activePlayerId = this._getNextPlayerId()
+
+      while (this.activePlayer.eliminated) {
+        this._activePlayerId = this._getNextPlayerId()
+      }
+
       this._interactionMode = "activation"
       this._onTurnStart()
 
@@ -178,6 +183,14 @@ export class Game {
   }
 
   private _onTurnStart(): void {
+    const protectedActivePlayer = this.players.find(
+      (p) => p.id === this.activePlayerId && p.protected
+    )
+
+    if (protectedActivePlayer) {
+      protectedActivePlayer.protected = false
+    }
+
     this._activePlayerDraws()
   }
 
@@ -236,6 +249,7 @@ export class Game {
 
       case CardType.JITTERY_JUGGLER:
         this.players.forEach((player) => {
+          if (player.protected) return
           const playerCard = player.hand.splice(0, 1)[0]
           this.deck.insertCardAtIndex(playerCard, 0)
         })
@@ -243,6 +257,7 @@ export class Game {
         this.deck.shuffleDeck()
 
         this.players.forEach((player) => {
+          if (player.protected) return
           player.hand.push(this.deck.draw())
         })
 
