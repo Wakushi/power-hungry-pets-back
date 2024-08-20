@@ -2,10 +2,9 @@ import {MultiplayerService} from "../services/multiplayer.service"
 
 import {Deck} from "./deck"
 import {Player} from "./player"
-import {UserService} from "../services/user.service"
 import {User} from "../lib/types/user.type"
 import {ServerEvent} from "../lib/types/event.type"
-import {CardType} from "../lib/types/card.type";
+import {Card, CardType} from "../lib/types/card.type";
 
 export class Game {
     private _multiplayerService = MultiplayerService.getInstance()
@@ -22,6 +21,10 @@ export class Game {
 
     private _gameOver = false
     private _interactionMode: "selection" | "activation" = "activation"
+    private _cardViewContext!: {
+        playedCardValue: CardType,
+        cardShown: Card
+    }
 
     constructor(users: User[]) {
         if (users?.length < 2) {
@@ -113,7 +116,7 @@ export class Game {
         }
     }
 
-    public onPlayerElimination(): void {
+    private _onPlayerElimination(): void {
         const activePlayers = this.players.filter((player) => !player.eliminated)
         if (activePlayers.length === 1) {
             this._onGameOver(activePlayers[0])
@@ -149,12 +152,11 @@ export class Game {
     private _onGameOver(winner: Player): void {
         this._gameOver = true
         this._lastWinner = winner
-        UserService.getInstance().connectedUsers = []
 
         this._multiplayerService.broadcast({
             type: ServerEvent.GAME_OVER,
-            data: winner,
-        }, [])
+            data: this,
+        }, this.players.map(p => p.clientId))
     }
 
     private _resetDeck(): void {
@@ -242,11 +244,10 @@ export class Game {
                 break
 
             case CardType.DOGGY_GRAVE_DIGGER:
-                // this._sendCardViewEvent({
-                //     playedCardValue: CardType.DOGGY_GRAVE_DIGGER,
-                //     card: this.deck.sideCard,
-                //     deck: this.deck,
-                // })
+                this._sendCardViewEvent({
+                    playedCardValue: CardType.DOGGY_GRAVE_DIGGER,
+                    card: this.deck.sideCard,
+                })
                 break
 
             case CardType.SNAKE_SORCERER:
@@ -264,11 +265,10 @@ export class Game {
 
             case CardType.MOUSE_TRAPPER:
                 const card = this.deck.draw()
-                // this._sendCardViewEvent({
-                //     playedCardValue: CardType.MOUSE_TRAPPER,
-                //     card,
-                //     deck: this.deck,
-                // })
+                this._sendCardViewEvent({
+                    playedCardValue: CardType.MOUSE_TRAPPER,
+                    card,
+                })
                 break
 
             case CardType.CRYSTAL_BOWL:
@@ -295,15 +295,9 @@ export class Game {
 
         this.lastSelectedPlayer = selectedPlayer
 
-        console.log('Last selected player: ', this.lastSelectedPlayer)
-
         if (!activePlayer) return
 
         if (this.lastSelectedPlayer.protected) {
-            //   alert(
-            //     "Player " + this.lastSelectedPlayer.id + " is protected !"
-            //   )
-            //   togglePlayerSelectionModal(false)
             this.onNextTurn()
             return
         }
@@ -325,6 +319,7 @@ export class Game {
 
                 if (selectedPlayerCard.value.toString() === CardType.KING_CAT) {
                     selectedPlayer.eliminate()
+                    this._onPlayerElimination()
                 } else {
                     selectedPlayer.hand.push(this.deck.draw())
                 }
@@ -336,8 +331,10 @@ export class Game {
                 const activePlayerCard = activePlayer.hand[0]
                 if (activePlayerCard.value > selectedPlayerCard.value) {
                     selectedPlayer.eliminate()
+                    this._onPlayerElimination()
                 } else if (activePlayerCard.value < selectedPlayerCard.value) {
                     activePlayer.eliminate()
+                    this._onPlayerElimination()
                 }
 
                 this.onNextTurn()
@@ -365,6 +362,23 @@ export class Game {
         }, [this.activePlayer.clientId])
     }
 
+    private _sendCardViewEvent({
+                                   playedCardValue,
+                                   card,
+                               }: {
+        playedCardValue: CardType
+        card: Card
+    }): void {
+        this._cardViewContext = {
+            playedCardValue, cardShown: card
+        }
+
+        MultiplayerService.getInstance().broadcast({
+            type: ServerEvent.OPEN_CARD_VIEW,
+            data: this,
+        }, [this.activePlayer.clientId])
+    }
+
     private _checkLastCardIdInteraction(clickedCardId: string): void {
         switch (this.lastCardPlayedId) {
             case CardType.CRYSTAL_BOWL:
@@ -372,6 +386,7 @@ export class Game {
                     this.lastSelectedPlayer.hand[0].value === +clickedCardId
                 ) {
                     this.lastSelectedPlayer.eliminate()
+                    this._onPlayerElimination()
                 }
                 this.onNextTurn()
                 break
@@ -380,23 +395,5 @@ export class Game {
         }
     }
 
-    // private _sendCardViewEvent({
-    //                                playedCardValue,
-    //                                card,
-    //                                deck,
-    //                            }: {
-    //     playedCardValue: CardType
-    //     card: Card
-    //     deck: Deck
-    // }): void {
-    //     MultiplayerService.getInstance().broadcast({
-    //         type: ServerEvent.OPEN_CARD_VIEW,
-    //         data: {
-    //             playedCardValue,
-    //             card,
-    //             deck,
-    //         },
-    //     }, [])
-    // }
-    //
+
 }
